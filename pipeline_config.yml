@@ -1,0 +1,17 @@
+features:
+  categorical: []
+  numerical: []
+
+pipeline:
+  n_jobs: 3
+  per_run_time_limit: 60
+  time_left_for_this_task: 3600
+  # include_estimators: ['random_forest', 'adaboost']
+  # exclude_estimators: []
+  # include_preprocessors: ['no_preprocessing']
+  #tip: An ensemble of size one will result in always choosing the current best model
+  #     according to its performance on the validation set
+  ensemble_size: 1
+  #tip: meta-learning to zero makes auto-sklearn use the regular
+  #     SMAC algorithm for suggesting new hyperparameter configurations.
+  initial_configurations_via_metalearning: 0
