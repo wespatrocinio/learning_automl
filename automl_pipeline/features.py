@@ -22,14 +22,16 @@ def get_example_features():
     print('Loading data')
     return datasets.load_breast_cancer(return_X_y=True)
 
-def tokenizer(text):
+def tokenize(text):
     tokenizer = RegexpTokenizer(r'\w+')
     tokens = tokenizer.tokenize(text.lower())
+    stopwords = nltk.corpus.stopwords.words("portuguese")
+    clean_tokens = [token for token in tokens if token not in stopwords]
     stemmer = nltk.stem.RSLPStemmer()
-    return [stemmer.stem(t) for t in tokens]
+    return [stemmer.stem(t) for t in clean_tokens]
 
 def get_tokens(input_df):
-    input_df['tokens'] = input_df['lyric'].map(lambda x: tokenizer(x))
+    input_df['tokens'] = input_df['lyric'].map(lambda x: tokenize(x))
     return input_df
 
 def get_num_tokens(input_df):
@@ -47,15 +49,19 @@ def get_tfidf(input_df):
         strip_accents='unicode',
         analyzer='word',
         binary=False,
-        stop_words=nltk.corpus.stopwords.words("portuguese"),
-        tokenizer=tokenizer
+        tokenizer=tokenize,
+        max_features=200
     )
     tfidf = vectorizer.fit_transform(input_df['lyric'])
     df = pd.DataFrame(tfidf.toarray(), columns=vectorizer.get_feature_names())
-    return pd.concat([input_df, df], axis=1, join_axes=[input_df.index])
+    # return pd.concat([input_df, df], axis=1, join_axes=[input_df.index])
+    return df
 
 def convert_target(category, category_map):
     return category_map.get(category)
+
+def remove_outliers(df):
+    return df[df['num_tokens'] <= df['num_tokens'].quantile(0.99)]
 
 def run_pipeline(input_df, settings):
     pipe = Pipeline([
@@ -64,7 +70,7 @@ def run_pipeline(input_df, settings):
         ('num_distinct_tokens', FeatureTransformer(get_num_distinct_tokens)),
         ('tfidf', FeatureTransformer(get_tfidf))
     ])
-    df = pipe.fit_transform(input_df)
-    target = df['genre'].apply(lambda x: convert_target(x, settings.get('target_categories_map')))
-    features = df.drop(columns=['lyric', 'genre', 'tokens'])
-    return features, target
+    # df = remove_outliers(pipe.fit_transform(input_df))
+    target = input_df['genre'].apply(lambda x: convert_target(x, settings.get('target_categories_map')))
+    # features = df.drop(columns=['lyric', 'genre', 'tokens'])
+    return pipe.fit_transform(input_df), target

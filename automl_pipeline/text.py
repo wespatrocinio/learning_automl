@@ -1,8 +1,5 @@
 from langdetect import detect
 
-import string
-import re
-
 def detect_language(col):
     return col.apply(lambda x: detect(x))
 

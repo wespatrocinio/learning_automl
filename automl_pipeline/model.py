@@ -1,31 +1,50 @@
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+from joblib import dump, load
+
 import autosklearn.classification
 import sklearn.model_selection
 import sklearn.metrics
 
-def generic(features, pipeline_settings, persistence):
-    X, y = features.get_example_features()
-    print('Train/test splitting')
-    X_train, X_test, y_train, y_test = \
-            sklearn.model_selection.train_test_split(X, y, random_state=1)
+def split_dataset(features, target):
+    return train_test_split(features, target, random_state=1)
 
+def train_automl(settings, features, target):
     print('Loading sklearn classifier')
+    print(settings)
     automl = autosklearn.classification.AutoSklearnClassifier(
-        **pipeline_settings.get('pipeline')
+        **settings
     )
-
     print('Fitting automl')
-    print(pipeline_settings)
-    automl.fit(X_train, y_train)
+    automl.fit(features, target)
+    return automl
 
-    #This call to fit_ensemble uses all models trained in the previous call
-    #to fit to build an ensemble which can be used with automl.predict()
-    # automl.fit_ensemble(y_train, ensemble_size=50)
-
+def predict_and_metrics(model, features, target):
     print('Predicting')
-    y_hat = automl.predict(X_test)
+    predicted_target = model.predict(features)
+    print(model.show_models())
+    print(model.sprint_statistics())
+    print("Accuracy score", sklearn.metrics.accuracy_score(target, predicted_target))
 
-    print(automl.show_models())
-    print(automl.sprint_statistics())
-    print("Accuracy score", sklearn.metrics.accuracy_score(y_test, y_hat))
+def save(model, path):
+    dump(model, path)
 
-    persistence.save_model(automl, 'model/automl.joblib')
+def load(path):
+    return load(path)
+
+def run_automl(settings, features, target, ensemble_size=0):
+    train_features, test_features, train_target, test_target = split_dataset(features, target)
+    model = train_automl(settings.get('automl'), train_features, train_target)
+    if ensemble_size > 0:
+        model.fit_ensemble(train_target, ensemble_size=ensemble_size)
+    predict_and_metrics(model, test_features, test_target)
+    save(model, settings.get('model_path'))
+    return model
+
+def run_rf(features, target, ensemble_size=0):
+    train_features, test_features, train_target, test_target = split_dataset(features, target)
+    model = RandomForestClassifier()
+    model.fit(train_features, train_target)
+    predicted_target = model.predict(features)
+    print("Accuracy score", sklearn.metrics.accuracy_score(target, predicted_target))
+    return model
