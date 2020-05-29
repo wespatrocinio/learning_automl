@@ -1,20 +1,19 @@
 from automl_pipeline import config, features, data, text, model
-import sklearn
-from sklearn.model_selection import train_test_split
-import autosklearn.classification
 
+if __name__ == '__main__':
+    print('Loading automl pipeline settings')
+    settings = config.load_pipeline()
 
-print('Loading automl pipeline settings')
-settings = config.load_pipeline()
+    print('Generating features and target')
+    features, target = data.load_features(settings.get('features'))
 
-print('Reading data from files')
-df = text.get_pt_br_lyrics(data.load_lyrics())
+    print(features.shape, target.shape)
 
-print('Generating features and target')
-features, target = features.run_pipeline(df, settings.get('features'))
+    # print('Vanilla RandomForest')
+    # rf = model.run_rf(features, target)
 
-print('Vanilla RandomForest')
-rf = model.run_rf(features, target)
+    # print('Vanilla DecisionTree')
+    # rf = model.run_dt(features, target)
 
-# print('Modelling')
-# automl = model.run_automl(settings.get('model'), features, target)
+    print('Modelling')
+    automl = model.run_automl(settings.get('model'), features, target)

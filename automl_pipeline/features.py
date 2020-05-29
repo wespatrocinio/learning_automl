@@ -1,4 +1,3 @@
-from os import pipe
 from sklearn import datasets
 from nltk.tokenize import RegexpTokenizer
 from sklearn.pipeline import Pipeline
@@ -54,7 +53,6 @@ def get_tfidf(input_df):
     )
     tfidf = vectorizer.fit_transform(input_df['lyric'])
     df = pd.DataFrame(tfidf.toarray(), columns=vectorizer.get_feature_names())
-    # return pd.concat([input_df, df], axis=1, join_axes=[input_df.index])
     return df
 
 def convert_target(category, category_map):
@@ -63,14 +61,19 @@ def convert_target(category, category_map):
 def remove_outliers(df):
     return df[df['num_tokens'] <= df['num_tokens'].quantile(0.99)]
 
-def run_pipeline(input_df, settings):
+def run_pipeline(input_df, settings, save_features=True):
     pipe = Pipeline([
         ('tokens', FeatureTransformer(get_tokens)),
         ('num_tokens', FeatureTransformer(get_num_tokens)),
         ('num_distinct_tokens', FeatureTransformer(get_num_distinct_tokens)),
         ('tfidf', FeatureTransformer(get_tfidf))
     ])
-    # df = remove_outliers(pipe.fit_transform(input_df))
     target = input_df['genre'].apply(lambda x: convert_target(x, settings.get('target_categories_map')))
-    # features = df.drop(columns=['lyric', 'genre', 'tokens'])
-    return pipe.fit_transform(input_df), target
+    features = pipe.fit_transform(input_df)
+    if save_features:
+        save(features, 'data/features/features.csv')
+        save(target, 'data/features/target.csv')
+    return features, target
+
+def save(df, path):
+    df.to_csv(path, encoding='utf-8', header=True, index_label='index')

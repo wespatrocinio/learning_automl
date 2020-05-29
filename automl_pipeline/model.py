@@ -1,5 +1,6 @@
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.tree import DecisionTreeClassifier
 from joblib import dump, load
 
 import autosklearn.classification
@@ -38,13 +39,21 @@ def run_automl(settings, features, target, ensemble_size=0):
     if ensemble_size > 0:
         model.fit_ensemble(train_target, ensemble_size=ensemble_size)
     predict_and_metrics(model, test_features, test_target)
-    save(model, settings.get('model_path'))
+    # save(model, settings.get('model_path'))
     return model
 
 def run_rf(features, target, ensemble_size=0):
     train_features, test_features, train_target, test_target = split_dataset(features, target)
     model = RandomForestClassifier()
     model.fit(train_features, train_target)
-    predicted_target = model.predict(features)
-    print("Accuracy score", sklearn.metrics.accuracy_score(target, predicted_target))
+    predicted_target = model.predict(test_features)
+    print("Accuracy score", sklearn.metrics.accuracy_score(test_target, predicted_target))
+    return model
+
+def run_dt(features, target, ensemble_size=0):
+    train_features, test_features, train_target, test_target = split_dataset(features, target)
+    model = DecisionTreeClassifier()
+    model.fit(train_features, train_target)
+    predicted_target = model.predict(test_features)
+    print("Accuracy score", sklearn.metrics.accuracy_score(test_target, predicted_target))
     return model

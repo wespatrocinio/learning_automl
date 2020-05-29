@@ -4,14 +4,18 @@ model:
   model_path: './model/automl.joblib'
   automl:
     n_jobs: 2
-    per_run_time_limit: 10
-    time_left_for_this_task: 30
-    include_estimators: ['random_forest']
-    # exclude_estimators: []
+    per_run_time_limit: 120
+    time_left_for_this_task: 3600
+    # include_estimators: ['random_forest']
+    # exclude_estimators: ['decision_tree']
     include_preprocessors: ['no_preprocessing']
+    # resampling_strategy_arguments: {train_size: 0.67}
+    # resampling_strategy_arguments: {folds: 5}
     #tip: An ensemble of size one will result in always choosing the current best model
     #     according to its performance on the validation set
-    # ensemble_size: 1
+    ensemble_size: 1
     #tip: meta-learning to zero makes auto-sklearn use the regular
     #     SMAC algorithm for suggesting new hyperparameter configurations.
     # initial_configurations_via_metalearning: 0
+    tmp_folder: /tmp/autosklearn_random_search_example_tmp
+    output_folder: /tmp/autosklearn_random_search_example_out
